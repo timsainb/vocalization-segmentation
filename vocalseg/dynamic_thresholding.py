@@ -8,6 +8,12 @@ def contiguous_regions(condition):
     """
     Compute contiguous region of binary value (e.g. silence in waveform) to 
         ensure noise levels are sufficiently low
+    
+    Arguments:
+        condition {[type]} -- [description]
+    
+    Returns:
+        [type] -- [description]
     """
     idx = []
     i = 0
@@ -27,7 +33,7 @@ def contiguous_regions(condition):
     return idx
 
 
-def dynamic_spectrogram(
+def dynamic_threshold_segmentation(
     vocalization,
     rate,
     min_level_db=-80,
@@ -45,19 +51,32 @@ def dynamic_spectrogram(
     spectral_range=None,
     verbose=False,
 ):
-
-    """computes a spectrogram from a waveform by iterating through thresholds
+    """
+    computes a spectrogram from a waveform by iterating through thresholds
          to ensure a consistent noise level
-        
-        Arguments:
-            vocalization {[type]} -- [description]
-            rate {[type]} -- [description]
-        
-        Keyword Arguments:
-            verbose {bool} -- [description] (default: {False})
-            min_level_db
-            min_level_db_floor
-            db_delta
+    
+    Arguments:
+        vocalization {[type]} -- [description]
+        rate {[type]} -- [description]
+    
+    Keyword Arguments:
+        min_level_db {int} -- [description] (default: {-80})
+        min_level_db_floor {int} -- [description] (default: {-40})
+        db_delta {int} -- [description] (default: {5})
+        n_fft {int} -- [description] (default: {1024})
+        hop_length_ms {int} -- [description] (default: {1})
+        win_length_ms {int} -- [description] (default: {5})
+        ref_level_db {int} -- [description] (default: {20})
+        pre {float} -- [description] (default: {0.97})
+        silence_threshold {float} -- [description] (default: {0.05})
+        min_silence_for_spec {float} -- [description] (default: {0.1})
+        max_vocal_for_spec {float} -- [description] (default: {1.0})
+        min_syllable_length_s {float} -- [description] (default: {0.1})
+        spectral_range {[type]} -- [description] (default: {None})
+        verbose {bool} -- [description] (default: {False})
+    
+    Returns:
+        [type] -- [description]
     """
 
     # does the envelope meet the standards necessary to consider this a bout
@@ -106,11 +125,6 @@ def dynamic_spectrogram(
         # normalize envelope
         vocal_envelope = vocal_envelope / np.max(vocal_envelope)
 
-        # import matplotlib.pyplot as plt
-        # fig, ax = plt.subplots(figsize=(20, 4))
-        # plt.plot(vocal_envelope > silence_threshold)
-        # plt.show()
-
         # Look at how much silence exists in the signal
         onsets, offsets = onsets_offsets(vocal_envelope > silence_threshold) / fft_rate
         onsets_sil, offsets_sil = (
@@ -154,6 +168,15 @@ def dynamic_spectrogram(
 
 
 def onsets_offsets(signal):
+    """
+    [summary]
+    
+    Arguments:
+        signal {[type]} -- [description]
+    
+    Returns:
+        [type] -- [description]
+    """
     elements, nelements = ndimage.label(signal)
     if nelements == 0:
         return np.array([[0], [0]])
