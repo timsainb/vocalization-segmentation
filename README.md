@@ -18,7 +18,7 @@ There are two main segmentation algorithms:
 
 ### Parameters
 
-There are a whole bunch of different parameters for the two algorithms. Here is a quick description of each:
+There are a whole bunch of different parameters for the two algorithms. You need to carefully set them to get the results you want. Here is a quick description of each:
 
 ```
 Arguments:

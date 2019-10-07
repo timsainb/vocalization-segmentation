@@ -39,7 +39,7 @@ def continuity_segmentation(
     figsize=(20, 5),
 ):
     """
-    [summary]
+    segments song into continuous elements
 
     Arguments:
         vocalization {[type]} -- waveform of song
@@ -449,29 +449,41 @@ def get_syllable_timing(elements, hop_length_ms):
     return unique_elements, syllable_start_times, syllable_end_times
 
 
-def plot_labelled_elements(elements, spec, figsize = (30,5)):
+def plot_labelled_elements(elements, spec, background="white", figsize=(30, 5)):
     """ plots a spectrogram with colormap labels
     """
     unique_elements = np.unique(elements[elements != 0].astype(int))
-    pal = np.random.permutation(sns.color_palette('nipy_spectral', n_colors=len(unique_elements)))
-    
-    new_spec = np.ones(list(np.shape(elements)) + [4])
+    pal = np.random.permutation(
+        sns.color_palette("rainbow", n_colors=len(unique_elements))
+    )
+
+    new_spec = np.zeros(list(np.shape(elements)) + [4])
     # fill spectrogram with colored regions
-    for el, pi in tqdm(zip(unique_elements, pal), total = len(unique_elements)):
-        cdict = {
-            'red': [(0, pi[0], pi[0]),(1, pi[0], pi[0])],
-            'green': [(0, pi[1], pi[1]),(1, pi[1], pi[1])],
-            'blue': [(0, pi[2], pi[2]),(1, pi[2], pi[2])],
-            'alpha': [(0, 0, 0),(1, 1, 1)]
-        }
-        cmap = LinearSegmentedColormap('CustomMap', cdict)
-        
-        new_spec[elements==el] = cmap(spec[elements==el])
+    for el, pi in tqdm(
+        zip(unique_elements, pal), total=len(unique_elements), leave=False
+    ):
+
+        if background == "black":
+
+            cdict = {
+                "red": [(0, pi[0], pi[0]), (1, 1, 1)],
+                "green": [(0, pi[1], pi[1]), (1, 1, 1)],
+                "blue": [(0, pi[2], pi[2]), (1, 1, 1)],
+                "alpha": [(0, 0, 0), (0.25, 0.5, 0.5), (1, 1, 1)],
+            }
+        else:
+            cdict = {
+                "red": [(0, pi[0], pi[0]), (1, 0, 0)],
+                "green": [(0, pi[1], pi[1]), (1, 0, 0)],
+                "blue": [(0, pi[2], pi[2]), (1, 0, 0)],
+                "alpha": [(0, 0, 0), (1, 1, 1)],
+            }
+        cmap = LinearSegmentedColormap("CustomMap", cdict)
+
+        new_spec[elements == el] = cmap(spec[elements == el])
 
     fig, ax = plt.subplots(figsize=figsize)
-    ax.imshow(new_spec,
-              interpolation=None,
-            aspect="auto",
-            origin="lower",)
-    
+    ax.set_facecolor(background)
+    ax.imshow(new_spec, interpolation=None, aspect="auto", origin="lower")
+
     return new_spec

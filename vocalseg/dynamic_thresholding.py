@@ -56,27 +56,28 @@ def dynamic_threshold_segmentation(
          to ensure a consistent noise level
     
     Arguments:
-        vocalization {[type]} -- [description]
-        rate {[type]} -- [description]
+        vocalization {[type]} -- waveform of song
+        rate {[type]} -- samplerate of datas
     
     Keyword Arguments:
-        min_level_db {int} -- [description] (default: {-80})
-        min_level_db_floor {int} -- [description] (default: {-40})
-        db_delta {int} -- [description] (default: {5})
-        n_fft {int} -- [description] (default: {1024})
-        hop_length_ms {int} -- [description] (default: {1})
-        win_length_ms {int} -- [description] (default: {5})
-        ref_level_db {int} -- [description] (default: {20})
-        pre {float} -- [description] (default: {0.97})
-        silence_threshold {float} -- [description] (default: {0.05})
-        min_silence_for_spec {float} -- [description] (default: {0.1})
-        max_vocal_for_spec {float} -- [description] (default: {1.0})
-        min_syllable_length_s {float} -- [description] (default: {0.1})
-        spectral_range {[type]} -- [description] (default: {None})
-        verbose {bool} -- [description] (default: {False})
+        min_level_db {int} -- default dB minimum of spectrogram (threshold anything below) (default: {-80})
+        min_level_db_floor {int} -- highest number min_level_db is allowed to reach dynamically (default: {-40})
+        db_delta {int} -- delta in setting min_level_db (default: {5})
+        n_fft {int} -- FFT window size (default: {1024})
+        hop_length_ms {int} -- number audio of frames in ms between STFT columns (default: {1})
+        win_length_ms {int} -- size of fft window (ms) (default: {5})
+        ref_level_db {int} -- reference level dB of audio (default: {20})
+        pre {float} -- coefficient for preemphasis filter (default: {0.97})
+        min_syllable_length_s {float} -- shortest expected length of syllable (default: {0.1})
+        min_silence_for_spec {float} -- shortest expected length of silence in a song (used to set dynamic threshold) (default: {0.1})
+        silence_threshold {float} -- threshold for spectrogram to consider noise as silence (default: {0.05})
+        max_vocal_for_spec {float} -- longest expected vocalization in seconds  (default: {1.0})
+        spectral_range {[type]} -- spectral range to care about for spectrogram (default: {None})
+        verbose {bool} -- display output (default: {False})
+    
     
     Returns:
-        [type] -- [description]
+        [results] -- [dictionary of results]
     """
 
     # does the envelope meet the standards necessary to consider this a bout
@@ -188,3 +189,77 @@ def onsets_offsets(signal):
         ]
     ).T
     return np.array([onsets, offsets])
+
+
+import seaborn as sns
+from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.pyplot as plt
+
+
+def plot_segmented_spec(
+    spec, onsets, offsets, hop_length_ms, background="black", figsize=(30, 5)
+):
+    """ plot spectrogram with colormap labels
+    """
+    pal = np.random.permutation(sns.color_palette("hsv", n_colors=len(onsets)))
+    fft_rate = 1000 / hop_length_ms
+    new_spec = np.zeros(list(np.shape(spec)) + [4])
+    for onset, offset, pi in zip(onsets, offsets, pal):
+        if background == "black":
+            cdict = {
+                "red": [(0, pi[0], pi[0]), (1, 1, 1)],
+                "green": [(0, pi[1], pi[1]), (1, 1, 1)],
+                "blue": [(0, pi[2], pi[2]), (1, 1, 1)],
+                "alpha": [(0, 0, 0), (0.25, 0.5, 0.5), (1, 1, 1)],
+            }
+        else:
+            cdict = {
+                "red": [(0, pi[0], pi[0]), (1, 0, 0)],
+                "green": [(0, pi[1], pi[1]), (1, 0, 0)],
+                "blue": [(0, pi[2], pi[2]), (1, 0, 0)],
+                "alpha": [(0, 0, 0), (1, 1, 1)],
+            }
+
+        cmap = LinearSegmentedColormap("CustomMap", cdict)
+
+        start_frame = int(onset * fft_rate)
+        stop_frame = int(offset * fft_rate)
+        new_spec[:, start_frame:stop_frame, :] = cmap(spec[:, start_frame:stop_frame])
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.set_facecolor(background)
+    ax.imshow(new_spec, interpolation=None, aspect="auto", origin="lower")
+
+
+from matplotlib.patches import Rectangle
+from matplotlib.collections import PatchCollection
+from matplotlib import gridspec
+from vocalseg.utils import plot_spec
+
+
+def plot_segmentations(
+    spec, vocal_envelope, onsets, offsets, hop_length_ms, rate, figsize=(30, 5)
+):
+    fig = plt.figure(figsize=figsize)
+    gs = gridspec.GridSpec(2, 1, height_ratios=[1, 3])
+    gs.update(hspace=0.0)  # set the spacing between axes.
+    ax0 = plt.subplot(gs[0])
+    ax1 = plt.subplot(gs[1])
+    plot_spec(spec, fig, ax1, rate=rate, hop_len_ms=hop_length_ms, show_cbar=False)
+    ax0.plot(vocal_envelope, color="k")
+    ax0.set_xlim([0, len(vocal_envelope)])
+    ax1.xaxis.tick_bottom()
+    ylmin, ylmax = ax1.get_ylim()
+    ysize = (ylmax - ylmin) * 0.1
+    ymin = ylmax - ysize
+
+    patches = []
+    for onset, offset in zip(onsets, offsets):
+        ax1.axvline(onset, color="#FFFFFF", ls="dashed", lw=0.75)
+        ax1.axvline(offset, color="#FFFFFF", ls="dashed", lw=0.75)
+        patches.append(Rectangle(xy=(onset, ymin), width=offset - onset, height=ysize))
+
+    collection = PatchCollection(patches, color="white", alpha=0.5)
+    ax1.add_collection(collection)
+    ax0.axis("off")
+
