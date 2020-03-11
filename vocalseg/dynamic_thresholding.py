@@ -1,7 +1,11 @@
-from tqdm.autonotebook import tqdm
+from tqdm import tqdm
 from vocalseg.utils import _normalize, spectrogram_nn, norm
 import numpy as np
 from scipy import ndimage
+from matplotlib.patches import Rectangle
+from matplotlib.collections import PatchCollection
+from matplotlib import gridspec
+from vocalseg.utils import plot_spec
 
 
 def contiguous_regions(condition):
@@ -231,12 +235,6 @@ def plot_segmented_spec(
     ax.imshow(new_spec, interpolation=None, aspect="auto", origin="lower")
 
 
-from matplotlib.patches import Rectangle
-from matplotlib.collections import PatchCollection
-from matplotlib import gridspec
-from vocalseg.utils import plot_spec
-
-
 def plot_segmentations(
     spec, vocal_envelope, onsets, offsets, hop_length_ms, rate, figsize=(30, 5)
 ):
@@ -262,4 +260,5 @@ def plot_segmentations(
     collection = PatchCollection(patches, color="white", alpha=0.5)
     ax1.add_collection(collection)
     ax0.axis("off")
+    return fig
 

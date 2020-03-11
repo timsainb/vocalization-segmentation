@@ -103,6 +103,8 @@ def plot_spec(
     hop_len_ms=None,
     cmap=plt.cm.afmhot,
     show_cbar=True,
+    spectral_range=None,
+    time_range=None,
     figsize=(20, 6),
 ):
     """plot spectrogram
@@ -125,6 +127,12 @@ def plot_spec(
         extent[3] = rate / 2
     if hop_len_ms is not None:
         extent[1] = (np.shape(spec)[1] * hop_len_ms) / 1000
+    if spectral_range is not None:
+        extent[2] = spectral_range[0]
+        extent[3] = spectral_range[1]
+    if time_range is not None:
+        extent[0] = time_range[0]
+        extent[1] = time_range[1]
 
     spec_ax = ax.matshow(
         spec,
