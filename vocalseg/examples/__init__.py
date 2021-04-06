@@ -22,3 +22,8 @@ def canary():
 def bengalese_finch():
     rate, data = wavfile.read(os.path.join(FP, "bengalese_finch.wav"))
     return rate, data
+
+
+def mocking():
+    rate, data = wavfile.read(os.path.join(FP, "mocking.wav"))
+    return rate, data

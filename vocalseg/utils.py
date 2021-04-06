@@ -126,7 +126,9 @@ def plot_spec(
     if rate is not None:
         extent[3] = rate / 2
     if hop_len_ms is not None:
-        extent[1] = (np.shape(spec)[1] * hop_len_ms) / 1000
+        # adjust for integeger
+        hop_len_ms_int_adj = int(hop_len_ms / 1000 * rate) / (rate / 1000)
+        extent[1] = (np.shape(spec)[1] * hop_len_ms_int_adj) / 1000
     if spectral_range is not None:
         extent[2] = spectral_range[0]
         extent[3] = spectral_range[1]
