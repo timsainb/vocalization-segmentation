@@ -197,7 +197,7 @@ def continuity_segmentation(
             elements = remove_small_elements(elements, min_element_size)
 
     # randomize label values since they are temporally/frequency continuous
-    elements = randomize_labels(elements)
+    #elements = randomize_labels(elements)
     if verbose:
         plot_interim(elements, cmap=cmap, zero_nan=True)
         unique_elements = np.unique(elements[elements != 0].astype(int))

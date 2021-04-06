@@ -99,7 +99,8 @@ def dynamic_threshold_segmentation(
         ref_level_db=ref_level_db,
         pre=pre,
     )
-    fft_rate = 1000 / hop_length_ms
+    # fft_rate = 1000 / hop_length_ms
+    fft_rate = rate / int(hop_length_ms / 1000 * rate)
 
     if spectral_range is not None:
         spec_bin_hz = (rate / 2) / np.shape(spec_orig)[0]
