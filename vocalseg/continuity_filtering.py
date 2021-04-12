@@ -197,13 +197,23 @@ def continuity_segmentation(
             elements = remove_small_elements(elements, min_element_size)
 
     # randomize label values since they are temporally/frequency continuous
-    #elements = randomize_labels(elements)
+    # elements = randomize_labels(elements)
     if verbose:
         plot_interim(elements, cmap=cmap, zero_nan=True)
         unique_elements = np.unique(elements[elements != 0].astype(int))
         print("unique elements: {}".format(len(unique_elements)))
 
     results["elements"] = elements
+
+    # get time in seconds for each element's start and stop
+    fft_rate = rate / int(hop_length_ms / 1000 * rate)
+    results["onsets"] = []
+    results["offsets"] = []
+    for element in np.unique(results["elements"])[1:]:
+        element_in_frame = np.sum(results["elements"] == element, axis=0) > 0
+        element_start, element_end = np.where(element_in_frame)[0][[0, -1]] / fft_rate
+        results["onsets"].append(element_start)
+        results["offsets"].append(element_end)
 
     return results
 
